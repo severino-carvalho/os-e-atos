@@ -1,11 +1,18 @@
-import { Link } from "@tanstack/react-router";
-import { Moon, Sun, Search, Bell } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { Bell, LogOut, Moon, Search, Sun } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useUser } from "@/contexts/UserContext";
+import { logout } from "@/services/auth";
 
 export function Header() {
   const { theme, toggle } = useTheme();
   const { perfil, setPerfil } = useUser();
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    logout();
+    navigate({ to: "/login" });
+  }
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-[1280px] items-center gap-4 px-4 md:px-6">
@@ -63,6 +70,14 @@ export function Header() {
             className="inline-flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
           >
             {theme === "dark" ? <Sun size={18} aria-hidden /> : <Moon size={18} aria-hidden />}
+          </button>
+          <button
+            onClick={handleLogout}
+            aria-label="Sair"
+            className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full px-3 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            <LogOut size={16} aria-hidden />
+            <span className="hidden sm:inline">Sair</span>
           </button>
         </div>
       </div>

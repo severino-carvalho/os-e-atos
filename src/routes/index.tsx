@@ -25,6 +25,11 @@ export const Route = createFileRoute("/")({
 function FeedPage() {
   const [filtro, setFiltro] = useState<Categoria | null>(null);
 
+  const categorias = useMemo(() => {
+    const usadas = new Set(atos.map((a) => a.categoria));
+    return CATEGORIAS.filter((c) => usadas.has(c));
+  }, []);
+
   const lista = useMemo(
     () => (filtro ? atos.filter((a) => a.categoria === filtro) : atos),
     [filtro],
@@ -81,7 +86,7 @@ function FeedPage() {
             >
               Todas
             </button>
-            {CATEGORIAS.map((c) => (
+            {categorias.map((c) => (
               <CategoryPill
                 key={c}
                 categoria={c}

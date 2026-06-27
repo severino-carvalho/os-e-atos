@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
-import type { Usuario, Instituicao } from "@/data/types";
-import { usuarioLogado, instituicoes } from "@/data/mocks";
+import { createContext, type ReactNode, useContext, useState } from "react";
+import type { Instituicao, Usuario, UsuarioResponse } from "@/data/types";
+import { instituicoes, usuarioLogado } from "@/data/mocks";
+import { getUsuarioSalvo } from "@/services/auth";
 
 const PERFIL_KEY = "reuni_perfil";
 
@@ -8,14 +9,21 @@ interface UserContextValue {
   perfil: "pessoa_fisica" | "instituicao";
   setPerfil: (p: "pessoa_fisica" | "instituicao") => void;
   usuarioAtual: Usuario | Instituicao;
+  usuarioBackend: UsuarioResponse | null;
 }
 
 const UserContext = createContext<UserContextValue | null>(null);
 
+function perfilFromBackend(u: UsuarioResponse): "pessoa_fisica" | "instituicao" {
+  return u.tipo === "instituicao" ? "instituicao" : "pessoa_fisica";
+}
+
 export function UserProvider({ children }: { children: ReactNode }) {
   const [perfil, setPerfilState] = useState<"pessoa_fisica" | "instituicao">(() => {
-    const stored =
-      typeof window !== "undefined" ? sessionStorage.getItem(PERFIL_KEY) : null;
+    const usuarioBackend = getUsuarioSalvo();
+    if (usuarioBackend) return perfilFromBackend(usuarioBackend);
+
+    const stored = typeof window !== "undefined" ? sessionStorage.getItem(PERFIL_KEY) : null;
     return stored === "instituicao" ? "instituicao" : "pessoa_fisica";
   });
 
@@ -24,11 +32,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setPerfilState(p);
   };
 
+  const usuarioBackend = getUsuarioSalvo();
+
   const usuarioAtual: Usuario | Instituicao =
     perfil === "pessoa_fisica" ? usuarioLogado : instituicoes[0];
 
   return (
-    <UserContext.Provider value={{ perfil, setPerfil, usuarioAtual }}>
+    <UserContext.Provider value={{ perfil, setPerfil, usuarioAtual, usuarioBackend }}>
       {children}
     </UserContext.Provider>
   );

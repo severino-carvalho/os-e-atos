@@ -1,19 +1,20 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
-  Outlet,
-  Link,
   createRootRouteWithContext,
-  useRouter,
-  useNavigate,
   HeadContent,
+  Link,
+  Outlet,
   Scripts,
+  useNavigate,
+  useRouter,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { ThemeProvider } from "../lib/theme";
 import { UserProvider } from "../contexts/UserContext";
+import { isAutenticado } from "../services/auth";
 
 function NotFoundComponent() {
   return (
@@ -121,9 +122,10 @@ function RootComponent() {
   const navigate = useNavigate();
   const pathname = router.state.location.pathname;
 
+  const rotasPublicas = ["/login", "/registro"];
+
   useEffect(() => {
-    const isAuth = typeof window !== "undefined" && sessionStorage.getItem("reuni_auth") === "true";
-    if (!isAuth && pathname !== "/login") {
+    if (!isAutenticado() && !rotasPublicas.includes(pathname)) {
       navigate({ to: "/login" });
     }
   }, [pathname, navigate]);

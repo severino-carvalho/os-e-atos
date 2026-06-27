@@ -1,3 +1,27 @@
+// --- DTOs do backend ---
+
+export interface LoginRequest {
+  email: string;
+  senha: string;
+}
+
+export interface UsuarioResponse {
+  id: number;
+  email: string;
+  tipo: "instituicao" | "colaborador";
+  papel: "comum" | "administrador";
+  ativo: boolean;
+}
+
+export interface AuthResponse {
+  token: string;
+  tokenType: string;
+  expiraEmMs: number;
+  usuario: UsuarioResponse;
+}
+
+// --- Tipos do domínio frontend ---
+
 export type Categoria =
   | "Doação de Alimentos"
   | "Saúde"
@@ -63,4 +87,21 @@ export interface Conversa {
   nao_lidas: number;
   ato_referencia?: Ato;
   mensagens: Mensagem[];
+}
+
+export interface RegistroColaboradorRequest {
+  nomeCompleto: string;
+  cpf: string;
+  email: string;
+  senha: string;
+  localizacao?: string;
+}
+
+export interface RegistroInstituicaoRequest {
+  razaoSocial: string;
+  documento: string;
+  areaAtuacao?: string;
+  email: string;
+  senha: string;
+  localizacao?: string;
 }
