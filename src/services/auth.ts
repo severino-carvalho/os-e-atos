@@ -88,7 +88,7 @@ async function postAuthMultipart(
   }
   if (file) formData.append(fileParamName, file);
 
-  const res = await fetch(`${BASE_URL}/api/auth${path}`, {
+  const res = await fetch(`${BASE_URL}/auth${path}`, {
     method: "POST",
     body: formData,
   });
