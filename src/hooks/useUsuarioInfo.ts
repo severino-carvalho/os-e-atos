@@ -7,8 +7,8 @@ import { fetchGamificacaoPerfil } from "@/services/gamificacao";
  * Informações de exibição do usuário logado, derivadas do token e
  * complementadas pela API:
  * - Instituição: razão social, total de seguidores e nº de postagens (perfil
- *   e postagens via `/api/instituicoes/{uid}`).
- * - Colaborador: pontos e ofensiva (`/api/gamificacao/me`). O token não traz o
+ *   e postagens via `/instituicoes/{uid}`).
+ * - Colaborador: pontos e ofensiva (`/gamificacao/me`). O token não traz o
  *   nome do colaborador, então o e-mail é usado como nome de exibição.
  */
 export function useUsuarioInfo() {

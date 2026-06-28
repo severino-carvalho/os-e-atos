@@ -64,7 +64,7 @@ async function postAuth(
   data: unknown,
   statusEsperado: number,
 ): Promise<AuthResponse> {
-  const res = await fetch(`${BASE_URL}/api/auth${path}`, {
+  const res = await fetch(`${BASE_URL}/auth${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),

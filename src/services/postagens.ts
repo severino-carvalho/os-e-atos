@@ -82,7 +82,7 @@ export async function fetchFeed(params: FetchFeedParams = {}): Promise<Page<Post
   query.set("size", String(params.size ?? 10));
 
   try {
-    const pagina = await apiFetch<Page<PostagemApi>>(`/api/postagens/feed?${query.toString()}`);
+    const pagina = await apiFetch<Page<PostagemApi>>(`/postagens/feed?${query.toString()}`);
     return { ...pagina, content: pagina.content.map(mapPostagem) };
   } catch {
     // Backend indisponível: serve o feed mockado para manter a UI utilizável.
@@ -91,19 +91,19 @@ export async function fetchFeed(params: FetchFeedParams = {}): Promise<Page<Post
 }
 
 export async function fetchPostagem(id: number): Promise<PostagemResponse> {
-  return mapPostagem(await apiFetch<PostagemApi>(`/api/postagens/${id}`));
+  return mapPostagem(await apiFetch<PostagemApi>(`/postagens/${id}`));
 }
 
 export function toggleCurtida(id: number): Promise<ReacaoResponse> {
-  return apiFetch<ReacaoResponse>(`/api/postagens/${id}/reacoes`, { method: "POST" });
+  return apiFetch<ReacaoResponse>(`/postagens/${id}/reacoes`, { method: "POST" });
 }
 
 export function fetchComentarios(id: number, page = 0): Promise<Page<ComentarioResponse>> {
-  return apiFetch<Page<ComentarioResponse>>(`/api/postagens/${id}/comentarios?page=${page}`);
+  return apiFetch<Page<ComentarioResponse>>(`/postagens/${id}/comentarios?page=${page}`);
 }
 
 export function comentar(id: number, conteudo: string): Promise<ComentarioResponse> {
-  return apiFetch<ComentarioResponse>(`/api/postagens/${id}/comentarios`, {
+  return apiFetch<ComentarioResponse>(`/postagens/${id}/comentarios`, {
     method: "POST",
     body: JSON.stringify({ conteudo }),
   });
@@ -111,7 +111,7 @@ export function comentar(id: number, conteudo: string): Promise<ComentarioRespon
 
 export async function compartilhar(id: number): Promise<void> {
   // O endpoint responde 201 sem corpo — não tentamos parsear JSON.
-  const res = await fetch(`${BASE_URL}/api/postagens/${id}/compartilhamentos`, {
+  const res = await fetch(`${BASE_URL}/postagens/${id}/compartilhamentos`, {
     method: "POST",
     headers: { ...authHeaders() },
   });
@@ -122,5 +122,5 @@ export async function compartilhar(id: number): Promise<void> {
 }
 
 export function criarPostagem(data: FormData): Promise<PostagemResponse> {
-  return apiFetchMultipart<PostagemApi>("/api/postagens", data).then(mapPostagem);
+  return apiFetchMultipart<PostagemApi>("/postagens", data).then(mapPostagem);
 }
