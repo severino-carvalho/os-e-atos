@@ -17,7 +17,7 @@ dist-ssr
 *.local
 
 # Variáveis de ambiente locais (já cobertas por *.local, explícito por clareza)
-.env
+*.env
 .env.local
 .env.*.local
 

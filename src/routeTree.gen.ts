@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegistroRouteImport } from './routes/registro'
 import { Route as PublicarRouteImport } from './routes/publicar'
+import { Route as MensagensRouteImport } from './routes/mensagens'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InstituicaoIdRouteImport } from './routes/instituicao.$id'
@@ -23,6 +24,11 @@ const RegistroRoute = RegistroRouteImport.update({
 const PublicarRoute = PublicarRouteImport.update({
   id: '/publicar',
   path: '/publicar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MensagensRoute = MensagensRouteImport.update({
+  id: '/mensagens',
+  path: '/mensagens',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -44,6 +50,7 @@ const InstituicaoIdRoute = InstituicaoIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/mensagens': typeof MensagensRoute
   '/publicar': typeof PublicarRoute
   '/registro': typeof RegistroRoute
   '/instituicao/$id': typeof InstituicaoIdRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/mensagens': typeof MensagensRoute
   '/publicar': typeof PublicarRoute
   '/registro': typeof RegistroRoute
   '/instituicao/$id': typeof InstituicaoIdRoute
@@ -59,19 +67,33 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/mensagens': typeof MensagensRoute
   '/publicar': typeof PublicarRoute
   '/registro': typeof RegistroRoute
   '/instituicao/$id': typeof InstituicaoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/publicar' | '/registro' | '/instituicao/$id'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/mensagens'
+    | '/publicar'
+    | '/registro'
+    | '/instituicao/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/publicar' | '/registro' | '/instituicao/$id'
+  to:
+    | '/'
+    | '/login'
+    | '/mensagens'
+    | '/publicar'
+    | '/registro'
+    | '/instituicao/$id'
   id:
     | '__root__'
     | '/'
     | '/login'
+    | '/mensagens'
     | '/publicar'
     | '/registro'
     | '/instituicao/$id'
@@ -80,6 +102,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
+  MensagensRoute: typeof MensagensRoute
   PublicarRoute: typeof PublicarRoute
   RegistroRoute: typeof RegistroRoute
   InstituicaoIdRoute: typeof InstituicaoIdRoute
@@ -99,6 +122,13 @@ declare module '@tanstack/react-router' {
       path: '/publicar'
       fullPath: '/publicar'
       preLoaderRoute: typeof PublicarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mensagens': {
+      id: '/mensagens'
+      path: '/mensagens'
+      fullPath: '/mensagens'
+      preLoaderRoute: typeof MensagensRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -128,6 +158,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
+  MensagensRoute: MensagensRoute,
   PublicarRoute: PublicarRoute,
   RegistroRoute: RegistroRoute,
   InstituicaoIdRoute: InstituicaoIdRoute,

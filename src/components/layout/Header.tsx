@@ -1,13 +1,20 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Bell, LogOut, Moon, Search, Sun } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Bell, LogOut, Mail, Moon, Search, Sun } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { useUser } from "@/contexts/UserContext";
 import { logout } from "@/services/auth";
+import { countNaoLidas } from "@/services/mensagens";
 
 export function Header() {
   const { theme, toggle } = useTheme();
   const { perfil, setPerfil } = useUser();
   const navigate = useNavigate();
+
+  const { data: naoLidas = 0 } = useQuery({
+    queryKey: ["mensagens", "nao-lidas"],
+    queryFn: countNaoLidas,
+  });
 
   function handleLogout() {
     logout();
@@ -58,6 +65,18 @@ export function Header() {
               {perfil === "pessoa_fisica" ? "PF" : "ONG"}
             </button>
           )}
+          <Link
+            to="/mensagens"
+            aria-label="Mensagens"
+            className="relative inline-flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
+          >
+            <Mail size={18} aria-hidden />
+            {naoLidas > 0 && (
+              <span className="absolute right-1.5 top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                {naoLidas > 9 ? "9+" : naoLidas}
+              </span>
+            )}
+          </Link>
           <button
             aria-label="Notificações"
             className="inline-flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"

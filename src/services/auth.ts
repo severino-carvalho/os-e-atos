@@ -5,8 +5,8 @@ import type {
   RegistroInstituicaoRequest,
   UsuarioResponse,
 } from "@/data/types";
+import { BASE_URL } from "./api";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const TOKEN_KEY = "reuni_token";
 const USER_KEY = "reuni_user";
 const isBrowser = typeof window !== "undefined";
@@ -54,42 +54,35 @@ async function extrairMensagemErro(res: Response): Promise<string> {
   return "Erro inesperado. Tente novamente.";
 }
 
-export async function login(data: LoginRequest): Promise<AuthResponse> {
-  const res = await fetch(`${BASE_URL}/auth/login`, {
+/**
+ * As rotas de autenticação não passam por `apiFetch` porque precisam de
+ * tratamento de erro próprio (mensagens amigáveis por status) e não enviam
+ * token. Os caminhos incluem o prefixo `/api`, como os demais serviços.
+ */
+async function postAuth(
+  path: string,
+  data: unknown,
+  statusEsperado: number,
+): Promise<AuthResponse> {
+  const res = await fetch(`${BASE_URL}/api/auth${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  if (res.status !== 200) throw new Error(await extrairMensagemErro(res));
+  if (res.status !== statusEsperado) throw new Error(await extrairMensagemErro(res));
   const json: AuthResponse = await res.json();
   salvarSessao(json);
   return json;
 }
 
-export async function registrarColaborador(
-  data: RegistroColaboradorRequest,
-): Promise<AuthResponse> {
-  const res = await fetch(`${BASE_URL}/auth/registro/colaborador`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  if (res.status !== 201) throw new Error(await extrairMensagemErro(res));
-  const json: AuthResponse = await res.json();
-  salvarSessao(json);
-  return json;
+export function login(data: LoginRequest): Promise<AuthResponse> {
+  return postAuth("/login", data, 200);
 }
 
-export async function registrarInstituicao(
-  data: RegistroInstituicaoRequest,
-): Promise<AuthResponse> {
-  const res = await fetch(`${BASE_URL}/auth/registro/instituicao`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  if (res.status !== 201) throw new Error(await extrairMensagemErro(res));
-  const json: AuthResponse = await res.json();
-  salvarSessao(json);
-  return json;
+export function registrarColaborador(data: RegistroColaboradorRequest): Promise<AuthResponse> {
+  return postAuth("/registro/colaborador", data, 201);
+}
+
+export function registrarInstituicao(data: RegistroInstituicaoRequest): Promise<AuthResponse> {
+  return postAuth("/registro/instituicao", data, 201);
 }

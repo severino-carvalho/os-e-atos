@@ -125,6 +125,37 @@ export interface InstituicaoResumo {
   statusVerificacao: StatusVerificacao;
 }
 
+/**
+ * DTO **plano** exatamente como o backend devolve uma postagem
+ * (`PostagemResponse` no Spring). Use o mapper `mapPostagem` em
+ * `services/postagens.ts` para converter em `PostagemResponse` (view-model
+ * aninhado consumido pela UI).
+ */
+export interface PostagemApi {
+  id: number;
+  titulo: string;
+  descricao: string;
+  categoriaId: number;
+  categoriaNome: string;
+  instituicaoId: number;
+  instituicaoRazaoSocial: string;
+  tipoPostagem: TipoPostagem;
+  fotoUrl: string | null;
+  localizacao: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  dataPostagem: string | null;
+  status: StatusPostagem;
+  curtidasCount: number;
+  comentariosCount: number;
+  compartilhamentosCount: number;
+  criadoEm: string;
+}
+
+/**
+ * View-model aninhado usado pelos componentes (cards, perfil, publicar).
+ * É produzido a partir de `PostagemApi` pelo mapper do serviço.
+ */
 export interface PostagemResponse {
   id: number;
   titulo: string;
@@ -142,15 +173,19 @@ export interface PostagemResponse {
   criadoEm: string;
 }
 
+/** Resposta do toggle de curtida (`ReacaoResponse` no backend). */
+export interface ReacaoResponse {
+  curtiu: boolean;
+  curtidasCount: number;
+}
+
+/** Comentário como o backend devolve (`ComentarioResponse`). */
 export interface ComentarioResponse {
   id: number;
+  usuarioId: number;
+  usuarioEmail: string;
   conteudo: string;
   criadoEm: string;
-  autor: {
-    id: number;
-    nome: string;
-    avatarUrl: string | null;
-  };
 }
 
 export interface Page<T> {
@@ -173,5 +208,69 @@ export interface LeaderboardEntry {
 
 export interface LeaderboardData {
   top5: LeaderboardEntry[];
-  colaboradorLogado: LeaderboardEntry;
+  colaboradorLogado: LeaderboardEntry | null;
+}
+
+// --- DTOs de gamificação (backend) ---
+
+export interface LeaderboardEntryApi {
+  colaboradorId: number;
+  nome: string;
+  pontosTotal: number;
+  ofensivaAtual: number;
+  posicao: number;
+}
+
+export interface LeaderboardApiResponse {
+  top: LeaderboardEntryApi[];
+  eu: LeaderboardEntryApi | null;
+}
+
+export interface MissaoResponse {
+  tipo: string;
+  progresso: number;
+  meta: number;
+  concluida: boolean;
+}
+
+export interface GamificacaoPerfilResponse {
+  pontosTotal: number;
+  ofensivaAtual: number;
+  ofensivaRecorde: number;
+  posicaoRanking: number;
+  missoesDiarias: MissaoResponse[];
+  bonusDiarioConcluido: boolean;
+}
+
+// --- DTOs de instituição (backend) ---
+
+export interface InstituicaoPerfilResponse {
+  id: number;
+  email: string;
+  razaoSocial: string;
+  documento: string;
+  areaAtuacao: string | null;
+  localizacao: string | null;
+  statusVerificacao: StatusVerificacao;
+  totalSeguidores: number;
+}
+
+// --- DTOs de mensagens (backend) ---
+
+export interface MensagemResponse {
+  id: number;
+  remetenteId: number;
+  remetenteEmail: string;
+  instituicaoId: number;
+  instituicaoNome: string;
+  postagemId: number | null;
+  conteudo: string;
+  lida: boolean;
+  criadoEm: string;
+}
+
+export interface MensagemRequest {
+  instituicaoId: number;
+  postagemId?: number | null;
+  conteudo: string;
 }

@@ -1,6 +1,5 @@
 import { createContext, type ReactNode, useContext, useState } from "react";
-import type { Instituicao, Usuario, UsuarioResponse } from "@/data/types";
-import { instituicoes, usuarioLogado } from "@/data/mocks";
+import type { UsuarioResponse } from "@/data/types";
 import { getUsuarioSalvo } from "@/services/auth";
 
 const PERFIL_KEY = "reuni_perfil";
@@ -8,7 +7,6 @@ const PERFIL_KEY = "reuni_perfil";
 interface UserContextValue {
   perfil: "pessoa_fisica" | "instituicao";
   setPerfil: (p: "pessoa_fisica" | "instituicao") => void;
-  usuarioAtual: Usuario | Instituicao;
   usuarioBackend: UsuarioResponse | null;
 }
 
@@ -34,11 +32,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const usuarioBackend = getUsuarioSalvo();
 
-  const usuarioAtual: Usuario | Instituicao =
-    perfil === "pessoa_fisica" ? usuarioLogado : instituicoes[0];
-
   return (
-    <UserContext.Provider value={{ perfil, setPerfil, usuarioAtual, usuarioBackend }}>
+    <UserContext.Provider value={{ perfil, setPerfil, usuarioBackend }}>
       {children}
     </UserContext.Provider>
   );

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/ReuniButton";
 import { ApenasInstituicao } from "@/components/guards/ApenasInstituicao";
 import { fetchCategorias } from "@/services/categorias";
 import { fetchFeed } from "@/services/postagens";
-import { usuarioLogado } from "@/data/mocks";
+import { useUsuarioInfo } from "@/hooks/useUsuarioInfo";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -25,6 +25,7 @@ export const Route = createFileRoute("/")({
 
 function FeedPage() {
   const navigate = useNavigate();
+  const info = useUsuarioInfo();
   const [filtroCategoria, setFiltroCategoria] = useState<number | null>(null);
 
   const { data: categorias = [] } = useQuery({
@@ -32,7 +33,12 @@ function FeedPage() {
     queryFn: fetchCategorias,
   });
 
-  const { data: feedData, isLoading, isError, error } = useQuery({
+  const {
+    data: feedData,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ["feed", filtroCategoria],
     queryFn: () => fetchFeed({ categoriaId: filtroCategoria ?? undefined }),
   });
@@ -45,7 +51,7 @@ function FeedPage() {
         <ApenasInstituicao>
           <section className="rounded-2xl border border-border bg-card p-5">
             <div className="flex items-start gap-3">
-              <Avatar src={usuarioLogado.avatar_url} alt={usuarioLogado.nome} size={44} />
+              <Avatar src={info.avatarUrl} alt={info.nome} size={44} />
               <div className="flex-1 min-w-0">
                 <textarea
                   placeholder="Publicar um ato... O que sua comunidade precisa hoje?"
@@ -124,9 +130,9 @@ function FeedPage() {
             </div>
           )}
 
-          {!isLoading && !isError && postagens.map((postagem) => (
-            <PostagemCard key={postagem.id} postagem={postagem} />
-          ))}
+          {!isLoading &&
+            !isError &&
+            postagens.map((postagem) => <PostagemCard key={postagem.id} postagem={postagem} />)}
 
           {!isLoading && !isError && postagens.length === 0 && (
             <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center text-sm text-muted-foreground">

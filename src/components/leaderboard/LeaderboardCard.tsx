@@ -59,10 +59,14 @@ export function LeaderboardCard() {
         {data.top5.map((entry) => (
           <LinhaRanking key={entry.id} entry={entry} />
         ))}
-        <li className="select-none px-2 py-0.5 text-center text-sm leading-none text-muted-foreground">
-          …
-        </li>
-        <LinhaRanking entry={data.colaboradorLogado} destaque />
+        {data.colaboradorLogado && (
+          <>
+            <li className="select-none px-2 py-0.5 text-center text-sm leading-none text-muted-foreground">
+              …
+            </li>
+            <LinhaRanking entry={data.colaboradorLogado} destaque />
+          </>
+        )}
       </ul>
     </div>
   );

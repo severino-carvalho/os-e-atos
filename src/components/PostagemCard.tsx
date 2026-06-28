@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Calendar, Heart, MapPin, MessageCircle, Share2 } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Calendar, Heart, MapPin, MessageCircle, Send, Share2 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import type { PostagemResponse, StatusPostagem } from "@/data/types";
-import { compartilhar, toggleCurtida } from "@/services/postagens";
+import { comentar, compartilhar, fetchComentarios, toggleCurtida } from "@/services/postagens";
 import { Avatar } from "./ui/ReuniAvatar";
 import { VerifiedBadge } from "./ui/ReuniVerifiedBadge";
 import { ApenasColaborador } from "./guards/ApenasColaborador";
@@ -43,15 +43,31 @@ export function PostagemCard({ postagem, compact }: Props) {
 
   const [curtido, setCurtido] = useState(false);
   const [curtidas, setCurtidas] = useState(postagem.curtidasCount);
-  const [compartilhamentos, setCompartilhamentos] = useState(
-    postagem.compartilhamentosCount,
-  );
+  const [compartilhamentos, setCompartilhamentos] = useState(postagem.compartilhamentosCount);
+  const [mostrarComentarios, setMostrarComentarios] = useState(false);
+  const [comentarios, setComentarios] = useState(postagem.comentariosCount);
+  const [novoComentario, setNovoComentario] = useState("");
+
+  const comentariosQuery = useQuery({
+    queryKey: ["comentarios", postagem.id],
+    queryFn: () => fetchComentarios(postagem.id),
+    enabled: mostrarComentarios,
+  });
+
+  const enviarComentario = useMutation({
+    mutationFn: () => comentar(postagem.id, novoComentario.trim()),
+    onSuccess: () => {
+      setNovoComentario("");
+      setComentarios((n) => n + 1);
+      comentariosQuery.refetch();
+    },
+  });
 
   const curtir = useMutation({
     mutationFn: () => toggleCurtida(postagem.id),
     onSuccess: (res) => {
-      setCurtido(res.curtido);
-      setCurtidas(res.totalCurtidas);
+      setCurtido(res.curtiu);
+      setCurtidas(res.curtidasCount);
     },
   });
 
@@ -163,7 +179,11 @@ export function PostagemCard({ postagem, compact }: Props) {
           <div className="mt-4 flex items-center gap-1 border-t border-border pt-3 -mb-1">
             <ActionBtn
               icon={
-                <Heart size={16} aria-hidden className={cn(curtido && "fill-current text-primary")} />
+                <Heart
+                  size={16}
+                  aria-hidden
+                  className={cn(curtido && "fill-current text-primary")}
+                />
               }
               label="Curtir"
               count={curtidas}
@@ -174,7 +194,9 @@ export function PostagemCard({ postagem, compact }: Props) {
             <ActionBtn
               icon={<MessageCircle size={16} aria-hidden />}
               label="Comentar"
-              count={postagem.comentariosCount}
+              count={comentarios}
+              active={mostrarComentarios}
+              onClick={() => setMostrarComentarios((v) => !v)}
             />
             <ActionBtn
               icon={<Share2 size={16} aria-hidden />}
@@ -184,6 +206,49 @@ export function PostagemCard({ postagem, compact }: Props) {
               onClick={() => partilhar.mutate()}
             />
           </div>
+
+          {mostrarComentarios && (
+            <div className="mt-3 space-y-3 border-t border-border pt-3">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (novoComentario.trim()) enviarComentario.mutate();
+                }}
+                className="flex items-center gap-2"
+              >
+                <input
+                  value={novoComentario}
+                  onChange={(e) => setNovoComentario(e.target.value.slice(0, 500))}
+                  placeholder="Escreva um comentário..."
+                  className="h-10 flex-1 rounded-full border border-border bg-surface px-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+                <button
+                  type="submit"
+                  aria-label="Enviar comentário"
+                  disabled={novoComentario.trim() === "" || enviarComentario.isPending}
+                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+                >
+                  <Send size={16} aria-hidden />
+                </button>
+              </form>
+
+              {comentariosQuery.isLoading && (
+                <p className="text-xs text-muted-foreground">Carregando comentários...</p>
+              )}
+
+              <ul className="space-y-3">
+                {(comentariosQuery.data?.content ?? []).map((c) => (
+                  <li key={c.id} className="text-sm">
+                    <span className="font-semibold text-foreground">{c.usuarioEmail}</span>
+                    <span className="ml-2 text-foreground/90">{c.conteudo}</span>
+                  </li>
+                ))}
+                {comentariosQuery.data && comentariosQuery.data.content.length === 0 && (
+                  <li className="text-xs text-muted-foreground">Seja o primeiro a comentar.</li>
+                )}
+              </ul>
+            </div>
+          )}
         </ApenasColaborador>
       </div>
     </article>

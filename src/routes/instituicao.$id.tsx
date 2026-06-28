@@ -1,57 +1,100 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { MapPin } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
-import { AtoCard } from "@/components/AtoCard";
+import { PostagemCard } from "@/components/PostagemCard";
 import { Avatar } from "@/components/ui/ReuniAvatar";
 import { Button } from "@/components/ui/ReuniButton";
 import { VerifiedBadge } from "@/components/ui/ReuniVerifiedBadge";
 import { ApenasColaborador } from "@/components/guards/ApenasColaborador";
-import { atos, instituicoes } from "@/data/mocks";
-import type { Instituicao } from "@/data/types";
+import { EnviarMensagem } from "@/components/EnviarMensagem";
+import {
+  desseguir,
+  fetchInstituicao,
+  fetchPostagensInstituicao,
+  getStatusSeguindo,
+  seguir,
+} from "@/services/instituicoes";
 
 export const Route = createFileRoute("/instituicao/$id")({
-  head: ({ params }) => {
-    const inst = instituicoes.find((i) => i.id === params.id);
-    return {
-      meta: [
-        { title: inst ? `${inst.razao_social} — reuni` : "Instituição — reuni" },
-        { name: "description", content: inst?.descricao ?? "Perfil de instituição na reuni." },
-      ],
-    };
-  },
+  head: () => ({
+    meta: [{ title: "Instituição — Caritatis" }],
+  }),
   component: PerfilInstituicao,
-  notFoundComponent: () => (
-    <AppShell rightRail={false}>
-      <p className="text-sm text-muted-foreground">Instituição não encontrada.</p>
-    </AppShell>
-  ),
-  loader: ({ params }): Instituicao => {
-    const inst = instituicoes.find((i) => i.id === params.id);
-    if (!inst) throw notFound();
-    return inst;
-  },
 });
 
-function PerfilInstituicao() {
-  const inst = Route.useLoaderData() as Instituicao;
-  const [tab, setTab] = useState<"atos" | "colab">("atos");
-  const [seguindo, setSeguindo] = useState(false);
+const AVATAR_FALLBACK =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='104' height='104'%3E%3Crect width='104' height='104' fill='%23e2e8f0'/%3E%3C/svg%3E";
 
-  const meus = atos.filter((a) => a.autor.id === inst.id);
+function PerfilInstituicao() {
+  const { id } = Route.useParams();
+  const instId = Number(id);
+  const queryClient = useQueryClient();
+  const [tab, setTab] = useState<"atos" | "colab">("atos");
+
+  const perfilQuery = useQuery({
+    queryKey: ["instituicao", instId],
+    queryFn: () => fetchInstituicao(instId),
+    enabled: Number.isFinite(instId),
+  });
+
+  const postagensQuery = useQuery({
+    queryKey: ["instituicao", instId, "postagens"],
+    queryFn: () => fetchPostagensInstituicao(instId),
+    enabled: Number.isFinite(instId),
+  });
+
+  const seguindoQuery = useQuery({
+    queryKey: ["instituicao", instId, "seguindo"],
+    queryFn: () => getStatusSeguindo(instId),
+    enabled: Number.isFinite(instId),
+  });
+
+  const seguindo = seguindoQuery.data ?? false;
+
+  const alternarSeguir = useMutation({
+    mutationFn: () => (seguindo ? desseguir(instId) : seguir(instId)),
+    onSuccess: (novoEstado) => {
+      queryClient.setQueryData(["instituicao", instId, "seguindo"], novoEstado);
+      queryClient.invalidateQueries({ queryKey: ["instituicao", instId] });
+    },
+  });
+
+  if (perfilQuery.isLoading) {
+    return (
+      <AppShell rightRail={false}>
+        <div className="animate-pulse rounded-2xl bg-muted h-64" />
+      </AppShell>
+    );
+  }
+
+  if (perfilQuery.isError || !perfilQuery.data) {
+    return (
+      <AppShell rightRail={false}>
+        <p className="rounded-2xl border border-dashed border-border bg-card p-10 text-center text-sm text-muted-foreground">
+          Instituição não encontrada.
+        </p>
+      </AppShell>
+    );
+  }
+
+  const inst = perfilQuery.data;
+  const verificada = inst.statusVerificacao === "verificada";
+  const postagens = postagensQuery.data?.content ?? [];
+  const totalPostagens = postagensQuery.data?.totalElements ?? 0;
 
   return (
     <AppShell rightRail={false}>
       <div className="space-y-6">
         {/* Header */}
         <section className="overflow-hidden rounded-2xl border border-border bg-card">
-          <div className="relative h-44 sm:h-56 bg-muted">
-            <img src={inst.capa_url} alt="" className="h-full w-full object-cover" />
-          </div>
+          <div className="h-32 sm:h-40 bg-gradient-to-br from-primary to-amber-600" />
           <div className="px-5 sm:px-8 pb-6">
             <div className="-mt-12 sm:-mt-14 flex flex-col sm:flex-row sm:items-end sm:gap-5">
               <Avatar
-                src={inst.avatar_url}
-                alt={inst.razao_social}
+                src={AVATAR_FALLBACK}
+                alt={inst.razaoSocial}
                 size={104}
                 shape="rounded"
                 ring
@@ -59,30 +102,36 @@ function PerfilInstituicao() {
               <div className="mt-4 sm:mt-0 sm:pb-2 flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <h1 className="font-display text-2xl font-bold text-foreground">
-                    {inst.razao_social}
+                    {inst.razaoSocial}
                   </h1>
-                  {inst.status_verificacao === "verificada" && <VerifiedBadge />}
+                  {verificada && <VerifiedBadge />}
                 </div>
-                <p className="mt-1 text-sm text-muted-foreground">{inst.area_atuacao}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {inst.areaAtuacao || "Instituição"}
+                </p>
+                {inst.localizacao && (
+                  <p className="mt-1 inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <MapPin size={12} aria-hidden /> {inst.localizacao}
+                  </p>
+                )}
               </div>
               <ApenasColaborador>
-                <div className="mt-4 flex gap-2 sm:mt-0 sm:pb-2">
+                <div className="mt-4 flex flex-wrap gap-2 sm:mt-0 sm:pb-2">
                   <Button
                     variant={seguindo ? "outline" : "primary"}
-                    onClick={() => setSeguindo((s) => !s)}
+                    disabled={alternarSeguir.isPending || seguindoQuery.isLoading}
+                    onClick={() => alternarSeguir.mutate()}
                   >
                     {seguindo ? "Seguindo" : "Seguir"}
                   </Button>
+                  <EnviarMensagem instituicaoId={inst.id} instituicaoNome={inst.razaoSocial} />
                 </div>
               </ApenasColaborador>
             </div>
 
-            <p className="mt-5 max-w-2xl text-sm text-foreground/90">{inst.descricao}</p>
-
-            <dl className="mt-5 grid grid-cols-3 gap-4 border-t border-border pt-4">
-              <Stat label="Atos publicados" value={inst.atos_count} />
-              <Stat label="Seguidores" value={inst.seguidores_count} />
-              <Stat label="Colaborações" value={inst.colaboracoes_count} />
+            <dl className="mt-5 grid grid-cols-2 gap-4 border-t border-border pt-4">
+              <Stat label="Atos publicados" value={totalPostagens} />
+              <Stat label="Seguidores" value={inst.totalSeguidores} />
             </dl>
           </div>
         </section>
@@ -99,10 +148,14 @@ function PerfilInstituicao() {
 
         {tab === "atos" ? (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {meus.map((a) => (
-              <AtoCard key={a.id} ato={a} compact />
+            {postagens.map((p) => (
+              <PostagemCard key={p.id} postagem={p} compact />
             ))}
-            {meus.length === 0 && (
+            {postagensQuery.isLoading &&
+              Array.from({ length: 2 }).map((_, i) => (
+                <div key={i} className="animate-pulse bg-muted rounded-2xl h-40" />
+              ))}
+            {!postagensQuery.isLoading && postagens.length === 0 && (
               <div className="md:col-span-2 rounded-2xl border border-dashed border-border bg-card p-10 text-center text-sm text-muted-foreground">
                 Nenhum ato publicado ainda.
               </div>
